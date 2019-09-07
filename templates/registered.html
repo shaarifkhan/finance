@@ -1,0 +1,8 @@
+{% extends 'layout.html' %}
+
+{% block main %}
+<form action="{{url_for('login')}}">
+    <h1 style="text-align: center;font: bold">you have been registered!</h1><br>
+    <button class="btn btn-primary" type="submit">login</button>
+</form>
+{% endblock main %}

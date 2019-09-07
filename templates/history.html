@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block main %}
+<table class="table table-striped">
+    <thead>
+            <tr>
+                    <th>Symbol</th>
+                    <th>Share</th>
+                    <th>Price</th>
+                    <th>time</th>
+                    <th>status</th>
+                </tr>
+    </thead>
+    <tbody>
+        {% for temp in history %}
+            <tr>
+                <td>{{temp['symbol']}}</td>
+                <td>{{temp['shares']}}</td>
+                <td>{{temp['price'] | usd}}</td>
+                <td>{{temp['time']}}</td>
+                <td>{{temp['status']}}</td>
+
+
+
+
+            </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+
+{% endblock main %}

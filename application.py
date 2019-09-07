@@ -48,7 +48,6 @@ def index():
     """Show portfolio of stocks"""
     stocks = db.execute("SELECT * FROM portfolio WHERE user_id = :user_id",user_id = session['user_id'])
 
-    print(stocks)
     #total of all shares
     total = db.execute("SELECT SUM(total) from portfolio WHERE user_id = :user_id",user_id= session['user_id'])
    
@@ -76,11 +75,11 @@ def buy():
             return apology("must enter symbol and no of shares",403)
 
         stock= lookup(request.form.get("symbol"))
-        noOfshares = int(request.form.get("share"))
-        if noOfshares < 0:
+        no_of_shares = int(request.form.get("share"))
+        if no_of_shares < 0:
             return apology("enter any positive no of shares",403)
         price = stock['price']
-        total = price * noOfshares
+        total = price * no_of_shares
         rows = db.execute("SELECT cash FROM users WHERE id=:user_id",user_id=session["user_id"])
         cash = rows[0]['cash']
         if cash < total:
@@ -91,13 +90,12 @@ def buy():
         # to check if the share of particular company is already present
         row = db.execute("SELECT symbol FROM portfolio WHERE user_id=:user_id AND symbol=:symbol ",user_id = session["user_id"],symbol=stock['symbol'])
         if row and (row[0]['symbol'] == stock['symbol']):
-            db.execute("UPDATE portfolio SET shares=shares+ :noOfshares,price=:price,total= total+ :total WHERE user_id = :user_id AND symbol=:symbol",noOfshares=noOfshares,price=price,total=total,user_id = session['user_id'],symbol=stock['symbol'])
+            db.execute("UPDATE portfolio SET shares=shares+ :no_of_shares,price=:price,total= total+ :total WHERE user_id = :user_id AND symbol=:symbol",no_of_shares=no_of_shares,price=price,total=total,user_id = session['user_id'],symbol=stock['symbol'])
         # if bought share of a particular company for the first time
         else:
-            index = db.execute("INSERT INTO portfolio(user_id,companyName,shares,price,total,symbol) VALUES(:id,:companyName,:shares,:price,:total,:symbol)",id=session["user_id"],companyName=stock['name'],shares=noOfshares,price=stock['price'],total=total,symbol=stock['symbol'])
-        
-        db.execute("INSERT INTO history (user_id,time,status,shares) VALUES(:user_id,DATETIME('now','localtime'),'bought',:noOfshares)",user_id=session['user_id'],noOfshares=noOfshares)
-
+            index = db.execute("INSERT INTO portfolio(user_id,companyName,shares,price,total,symbol) VALUES(:id,:companyName,:shares,:price,:total,:symbol)",id=session["user_id"],companyName=stock['name'],shares=no_of_shares,price=stock['price'],total=total,symbol=stock['symbol'])
+        print(price)
+        db.execute("INSERT INTO history (user_id,time,status,shares,symbol,price) VALUES(:user_id,DATETIME('now','localtime'),'bought',:no_of_shares,:symbol,:price)",user_id=session['user_id'],no_of_shares=no_of_shares,symbol=stock['symbol'],price=price)
 
         return redirect('/')
     
@@ -117,9 +115,9 @@ def check():
 @login_required
 def history():
     """Show history of transactions"""
-    return apology("TODO")
-
-
+    history= db.execute("SELECT symbol,time,status,shares,price FROM history WHERE user_id=:user_id",user_id=session['user_id'])
+    print(history)
+    return render_template("history.html",history=history)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -229,9 +227,12 @@ def sell():
 
         db.execute("UPDATE portfolio SET shares= shares - :no_of_shares,total=total-(:price* :no_of_shares) WHERE user_id=:user_id AND symbol=:symbol",price=price,no_of_shares=no_of_shares,user_id=session['user_id'],symbol=symbol)
         db.execute("UPDATE users SET cash= cash+ :price * :no_of_shares WHERE id=:user_id",price=price,no_of_shares=no_of_shares,user_id=session['user_id'])
+        
+        #inserting into history
+        db.execute("INSERT INTO history (user_id,time,status,shares,symbol,price) VALUES(:user_id,DATETIME('now','localtime'),'sold',:no_of_shares,:symbol,:price)",user_id=session['user_id'],no_of_shares=no_of_shares,symbol=symbol,price=price)
+
         return redirect("/")
     else:
-        print(share_names)
         return render_template("sell.html",share_names=share_names)
 
 
